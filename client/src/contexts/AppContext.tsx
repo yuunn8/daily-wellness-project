@@ -59,7 +59,7 @@ const token = localStorage.getItem('token');
 if (!token) return;
 
   try {
-    const res = await fetch('http://localhost:5000/api/user/me', {
+    const res = await fetch('http://daily-wellness.onrender.com/api/user/me', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
