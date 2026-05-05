@@ -16,4 +16,11 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
+console.log('DB CONFIG:', {
+  host: env.dbHost,
+  port: env.dbPort,
+  user: env.dbUser,
+  database: env.dbName
+});
+
 module.exports = pool;
