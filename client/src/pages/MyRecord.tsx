@@ -5,7 +5,7 @@ import { useApp } from '@/contexts/AppContext';
 import { Leaf, Trophy, Coins } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://daily-wellness.onrender.com/api';
 
 export default function MyRecord() {
   const [, setLocation] = useLocation();

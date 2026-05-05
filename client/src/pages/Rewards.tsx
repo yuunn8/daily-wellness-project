@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { nanoid } from 'nanoid';
 import type { Reward } from '@/types';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://daily-wellness.onrender.com/api';
 
 interface ExchangeHistory {
   id: string;

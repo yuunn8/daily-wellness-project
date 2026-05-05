@@ -3,10 +3,11 @@ const env = require('./env');
 
 const pool = mysql.createPool({
   host: env.dbHost,
-  port: env.dbPort,
+  port: Number(env.dbPort),
   user: env.dbUser,
   password: env.dbPassword,
   database: env.dbName,
+  ssl: {},
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0

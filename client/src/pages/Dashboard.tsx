@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://daily-wellness.onrender.com/api';
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();

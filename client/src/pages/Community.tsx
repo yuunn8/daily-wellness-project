@@ -8,8 +8,8 @@ import { Heart, MessageCircle, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-const API_BASE_URL = 'http://localhost:5000/api';
-const SERVER_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://daily-wellness.onrender.com/api';
+const SERVER_URL = 'https://daily-wellness.onrender.com/api';
 
 export default function Community() {
   const [, setLocation] = useLocation();

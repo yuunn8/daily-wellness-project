@@ -8,7 +8,7 @@ import { CheckCircle2, Camera } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://daily-wellness.onrender.com/api';
 
 const DUMMY_MISSIONS = [
   { id: '1', title: '물 2L 마시기', description: '하루 동안 물 충분히 섭취하기', completed: false, reward: 10, icon: '💧' },
