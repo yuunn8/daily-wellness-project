@@ -27,7 +27,7 @@ e.preventDefault();
 try {
   if (isLogin) {
     // ✅ 로그인
-    const res = await fetch('http://daily-wellness.onrender.com/api/auth/login', {
+    const res = await fetch('https://daily-wellness.onrender.com/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -50,7 +50,7 @@ try {
 
   } else {
     // ✅ 회원가입
-    const res = await fetch('http://daily-wellness.onrender.com/api/auth/signup', {
+    const res = await fetch('https://daily-wellness.onrender.com/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
