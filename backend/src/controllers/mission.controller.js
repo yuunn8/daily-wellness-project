@@ -13,7 +13,7 @@ const verifyMission = async (req, res) => {
     userId: req.user.id,
     missionId: Number(req.body.missionId),
     content: req.body.content,
-    filePath: req.file ? `/uploads/${req.file.filename}` : null
+    filePath: req.file ? req.file.path : null
   });
 
   res.status(201).json(result);

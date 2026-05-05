@@ -10,7 +10,7 @@ const createPost = async (req, res) => {
   const post = await postService.createPost({
     userId: req.user.id,
     content: req.body.content,
-    imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
+    imageUrl: req.file ? req.file.path : null
   });
 
   res.status(201).json({
