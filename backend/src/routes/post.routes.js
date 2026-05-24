@@ -20,6 +20,8 @@ router.post(
   asyncHandler(postController.createPost)
 );
 
+router.delete('/:postId', authMiddleware, asyncHandler(postController.deletePost));
+
 router.post('/:postId/like', authMiddleware, asyncHandler(postController.toggleLike));
 
 router.post(

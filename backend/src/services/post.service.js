@@ -1,5 +1,87 @@
 const pool = require('../config/db');
 
+const toYMD = (value) => {
+  if (!value) return null;
+
+  if (typeof value === 'string') {
+    return value.slice(0, 10);
+  }
+
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
+const diffDays = (fromDate, toDate) => {
+  const [fy, fm, fd] = fromDate.split('-').map(Number);
+  const [ty, tm, td] = toDate.split('-').map(Number);
+
+  const from = Date.UTC(fy, fm - 1, fd);
+  const to = Date.UTC(ty, tm - 1, td);
+
+  return Math.floor((to - from) / (1000 * 60 * 60 * 24));
+};
+
+const calculateStreakFromDates = (dates) => {
+  if (!dates.length) {
+    return 0;
+  }
+
+  const sortedDates = dates
+    .map(toYMD)
+    .filter(Boolean)
+    .sort((a, b) => b.localeCompare(a));
+
+  let streak = 1;
+  let previousDate = sortedDates[0];
+
+  for (let i = 1; i < sortedDates.length; i++) {
+    const currentDate = sortedDates[i];
+
+    if (diffDays(currentDate, previousDate) === 1) {
+      streak += 1;
+      previousDate = currentDate;
+      continue;
+    }
+
+    break;
+  }
+
+  return streak;
+};
+
+const recalculateUserStreak = async (connection, userId) => {
+  const [rows] = await connection.query(
+    `
+    SELECT DISTINCT mission_date
+    FROM mission_logs
+    WHERE user_id = ?
+    ORDER BY mission_date DESC
+    `,
+    [userId]
+  );
+
+  const dates = rows.map((row) => row.mission_date);
+  const lastCompletedDate = dates.length ? toYMD(dates[0]) : null;
+  const streakDays = calculateStreakFromDates(dates);
+
+  await connection.query(
+    `
+    UPDATE users
+    SET streak_days = ?,
+        last_completed_date = ?,
+        updated_at = NOW()
+    WHERE id = ?
+    `,
+    [streakDays, lastCompletedDate, userId]
+  );
+
+  return { streakDays, lastCompletedDate };
+};
+
+
 const getPosts = async (userId) => {
   const [posts] = await pool.query(
     `
@@ -186,9 +268,99 @@ const createComment = async ({ postId, userId, content }) => {
   };
 };
 
+
+const deletePost = async ({ postId, userId }) => {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [postRows] = await connection.query(
+      `
+      SELECT
+        p.id,
+        p.user_id,
+        p.mission_log_id,
+        ml.mission_id,
+        m.reward_coins
+      FROM posts p
+      LEFT JOIN mission_logs ml ON p.mission_log_id = ml.id
+      LEFT JOIN missions m ON ml.mission_id = m.id
+      WHERE p.id = ?
+        AND p.deleted_at IS NULL
+      LIMIT 1
+      FOR UPDATE
+      `,
+      [postId]
+    );
+
+    if (!postRows.length) {
+      const error = new Error('게시글을 찾을 수 없습니다.');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const post = postRows[0];
+
+    if (Number(post.user_id) !== Number(userId)) {
+      const error = new Error('본인 인증글만 삭제할 수 있습니다.');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    const missionLogId = post.mission_log_id;
+    const rewardCoins = Number(post.reward_coins || 0);
+
+    await connection.query('DELETE FROM comments WHERE post_id = ?', [postId]);
+    await connection.query('DELETE FROM likes WHERE post_id = ?', [postId]);
+    await connection.query('DELETE FROM posts WHERE id = ?', [postId]);
+
+    if (missionLogId) {
+      await connection.query(
+        `
+        UPDATE user_mission_status
+        SET status = 'pending',
+            completed_at = NULL,
+            mission_log_id = NULL,
+            updated_at = NOW()
+        WHERE mission_log_id = ?
+        `,
+        [missionLogId]
+      );
+
+      await connection.query('DELETE FROM mission_logs WHERE id = ?', [missionLogId]);
+
+      await connection.query(
+        `
+        UPDATE users
+        SET coins = GREATEST(coins - ?, 0),
+            updated_at = NOW()
+        WHERE id = ?
+        `,
+        [rewardCoins, userId]
+      );
+
+      await recalculateUserStreak(connection, userId);
+    }
+
+    await connection.commit();
+
+    return {
+      message: '인증글이 삭제되었습니다.',
+      deductedCoins: missionLogId ? rewardCoins : 0,
+    };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
 module.exports = {
   getPosts,
   createPost,
   toggleLike,
   createComment,
+  deletePost,
 };

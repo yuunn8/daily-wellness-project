@@ -4,16 +4,16 @@ import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useApp } from '@/contexts/AppContext';
-import { Heart, MessageCircle, Send } from 'lucide-react';
+import { Heart, MessageCircle, Send, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const API_BASE_URL = 'https://daily-wellness.onrender.com/api';
-const SERVER_URL = 'https://daily-wellness.onrender.com/api';
+const SERVER_URL = 'https://daily-wellness.onrender.com';
 
 export default function Community() {
   const [, setLocation] = useLocation();
-  const { isLoggedIn, communityPosts, setCommunityPosts, addComment, user } = useApp();
+  const { isLoggedIn, communityPosts, setCommunityPosts, addComment, user, setUser } = useApp();
 
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
@@ -90,6 +90,51 @@ export default function Community() {
       setCommentText('');
       setShowCommentDialog(false);
 
+      await fetchPosts();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+
+  const handleDeletePost = async (postId: string) => {
+    if (!window.confirm('인증글을 삭제하시겠습니까? 삭제 시 코인과 미션 완료 기록도 함께 취소됩니다.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || '게시글 삭제 실패');
+      }
+
+      setCommunityPosts((prev) => prev.filter((post) => post.id !== postId));
+
+      const userRes = await fetch(`${API_BASE_URL}/user/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        if (userData.user) {
+          // 삭제로 인해 변경된 코인과 연속 인증일을 화면에 반영한다.
+          setUser(userData.user);
+        }
+      }
+
+      alert(data.message || '인증글이 삭제되었습니다.');
       await fetchPosts();
     } catch (err: any) {
       alert(err.message);
@@ -191,9 +236,20 @@ export default function Community() {
                       <p className="font-semibold text-gray-900">{post.userName}</p>
                       <p className="text-sm text-gray-600">{post.missionTitle}</p>
                     </div>
-                    <p className="text-xs text-gray-500">
-                      {new Date(post.createdAt).toLocaleString('ko-KR')}
-                    </p>
+                    <div className="flex items-center gap-3">
+                      <p className="text-xs text-gray-500">
+                        {new Date(post.createdAt).toLocaleString('ko-KR')}
+                      </p>
+                      {String(post.userId) === String(user?.id) && (
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          className="text-gray-400 hover:text-red-500 transition-colors"
+                          aria-label="인증글 삭제"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 

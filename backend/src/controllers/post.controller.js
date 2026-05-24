@@ -28,6 +28,16 @@ const toggleLike = async (req, res) => {
   res.json(result);
 };
 
+
+const deletePost = async (req, res) => {
+  const result = await postService.deletePost({
+    postId: Number(req.params.postId),
+    userId: req.user.id,
+  });
+
+  res.json(result);
+};
+
 const createComment = async (req, res) => {
   const comment = await postService.createComment({
     postId: Number(req.params.postId),
@@ -46,4 +56,5 @@ module.exports = {
   createPost,
   toggleLike,
   createComment,
+  deletePost,
 };
