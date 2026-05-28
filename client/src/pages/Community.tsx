@@ -31,6 +31,7 @@ export default function Community() {
   const [editText, setEditText] = useState('');
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState('');
+  const [editImageName, setEditImageName] = useState('');
 
   useEffect(() => {
     if (!isLoggedIn && !localStorage.getItem('token')) {
@@ -195,6 +196,7 @@ export default function Community() {
   const handleEditImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
     setEditImageFile(file);
+    setEditImageName(file ? file.name : '');
 
     if (file) {
       setEditImagePreview(URL.createObjectURL(file));
@@ -207,6 +209,7 @@ export default function Community() {
     setEditText('');
     setEditImageFile(null);
     setEditImagePreview('');
+    setEditImageName('');
   };
 
   const handleUpdatePost = async () => {
@@ -494,6 +497,33 @@ export default function Community() {
 
           <div className="space-y-5">
             <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-700">이미지 수정</p>
+
+              <label
+                htmlFor="edit-image-upload"
+                className="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+              >
+                이미지 선택하기
+              </label>
+
+              <Input
+                id="edit-image-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleEditImageChange}
+                className="hidden"
+              />
+
+              <p className="text-xs text-gray-500">
+                {editImageName || '새 이미지를 선택하지 않았습니다.'}
+              </p>
+
+              <p className="text-xs text-gray-500">
+                새 이미지를 선택하면 기존 이미지가 교체됩니다.
+              </p>
+            </div>
+
+            <div className="space-y-2">
               <p className="text-sm font-medium text-gray-700">글 수정</p>
 
               <Textarea
@@ -506,20 +536,6 @@ export default function Community() {
 
               <p className="text-xs text-gray-500 text-right">
                 {editText.length}/100
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700">이미지 수정</p>
-
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handleEditImageChange}
-              />
-
-              <p className="text-xs text-gray-500">
-                새 이미지를 선택하면 기존 이미지가 교체됩니다.
               </p>
             </div>
 
