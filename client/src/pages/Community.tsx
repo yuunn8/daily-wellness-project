@@ -4,7 +4,7 @@ import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useApp } from '@/contexts/AppContext';
-import { Heart, MessageCircle, MoreHorizontal, Send } from 'lucide-react';
+import { Heart, MessageCircle, MoreHorizontal, Send, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const API_BASE_URL = 'https://daily-wellness.onrender.com/api';
-const SERVER_URL = 'https://daily-wellness.onrender.com/api';
+const SERVER_URL = 'https://daily-wellness.onrender.com';
 
 export default function Community() {
   const [, setLocation] = useLocation();
@@ -29,6 +29,8 @@ export default function Community() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
+  const [editImagePreview, setEditImagePreview] = useState('');
 
   useEffect(() => {
     if (!isLoggedIn && !localStorage.getItem('token')) {
@@ -106,6 +108,33 @@ export default function Community() {
     }
   };
 
+  const handleDeleteComment = async (postId: string, commentId: string) => {
+    const confirmed = window.confirm('댓글을 삭제하시겠습니까?');
+
+    if (!confirmed) return;
+
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(`${API_BASE_URL}/posts/${postId}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || '댓글 삭제 실패');
+      }
+
+      await fetchPosts();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value.length <= 50) {
       setCommentText(e.target.value);
@@ -149,9 +178,11 @@ export default function Community() {
     }
   };
 
-  const openEditDialog = (postId: string, caption: string) => {
+  const openEditDialog = (postId: string, caption: string, imageUrl?: string) => {
     setEditingPostId(postId);
     setEditText(caption || '');
+    setEditImageFile(null);
+    setEditImagePreview(imageUrl ? getImageUrl(imageUrl) : '');
     setShowEditDialog(true);
   };
 
@@ -161,19 +192,42 @@ export default function Community() {
     }
   };
 
+  const handleEditImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setEditImageFile(file);
+
+    if (file) {
+      setEditImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const resetEditDialog = () => {
+    setShowEditDialog(false);
+    setEditingPostId(null);
+    setEditText('');
+    setEditImageFile(null);
+    setEditImagePreview('');
+  };
+
   const handleUpdatePost = async () => {
     if (!editingPostId || !editText.trim()) return;
 
     try {
       const token = localStorage.getItem('token');
+      const formData = new FormData();
+
+      formData.append('content', editText.trim());
+
+      if (editImageFile) {
+        formData.append('image', editImageFile);
+      }
 
       const res = await fetch(`${API_BASE_URL}/posts/${editingPostId}`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ content: editText.trim() }),
+        body: formData,
       });
 
       const data = await res.json();
@@ -182,18 +236,7 @@ export default function Community() {
         throw new Error(data.message || '게시글 수정 실패');
       }
 
-      setCommunityPosts((prev) =>
-        prev.map((post) =>
-          post.id === editingPostId
-            ? { ...post, caption: data.post?.caption ?? editText.trim() }
-            : post
-        )
-      );
-
-      setShowEditDialog(false);
-      setEditingPostId(null);
-      setEditText('');
-
+      resetEditDialog();
       await fetchPosts();
     } catch (err: any) {
       alert(err.message);
@@ -228,7 +271,6 @@ export default function Community() {
     }
   };
 
-
   if (!isLoggedIn && !localStorage.getItem('token')) {
     return null;
   }
@@ -244,6 +286,8 @@ export default function Community() {
       caption.toLowerCase().includes(searchText.toLowerCase())
     );
   });
+
+  const selectedPost = communityPosts.find((p) => p.id === selectedPostId);
 
   return (
     <div className="min-h-screen bg-white">
@@ -298,7 +342,7 @@ export default function Community() {
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEditDialog(post.id, post.caption)}>
+                            <DropdownMenuItem onClick={() => openEditDialog(post.id, post.caption, post.imageUrl)}>
                               수정하기
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -355,13 +399,25 @@ export default function Community() {
                   {post.comments.length > 0 && (
                     <div className="mt-4 space-y-2 border-t border-gray-100 pt-4">
                       {post.comments.slice(0, 2).map((comment) => (
-                        <div key={comment.id} className="text-sm">
-                          <span className="font-semibold text-gray-900">
-                            {comment.userName}
-                          </span>
-                          <span className="text-gray-700 ml-2 break-words">
-                            {comment.text}
-                          </span>
+                        <div key={comment.id} className="flex items-start justify-between gap-2 text-sm">
+                          <div>
+                            <span className="font-semibold text-gray-900">
+                              {comment.userName}
+                            </span>
+                            <span className="text-gray-700 ml-2 break-words">
+                              {comment.text}
+                            </span>
+                          </div>
+                          {user && String(comment.userId) === String(user.id) && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteComment(post.id, comment.id)}
+                              className="text-gray-400 hover:text-red-600 transition-colors"
+                              aria-label="댓글 삭제"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -380,18 +436,26 @@ export default function Community() {
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
-            {communityPosts
-              .find((p) => p.id === selectedPostId)
-              ?.comments.map((comment) => (
-                <div key={comment.id} className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm text-gray-900">
-                      {comment.userName}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700 break-words">{comment.text}</p>
+            {selectedPost?.comments.map((comment) => (
+              <div key={comment.id} className="space-y-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-sm text-gray-900">
+                    {comment.userName}
+                  </span>
+                  {user && String(comment.userId) === String(user.id) && selectedPostId && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteComment(selectedPostId, comment.id)}
+                      className="text-gray-400 hover:text-red-600 transition-colors"
+                      aria-label="댓글 삭제"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
-              ))}
+                <p className="text-sm text-gray-700 break-words">{comment.text}</p>
+              </div>
+            ))}
           </div>
 
           <div className="border-t border-gray-100 pt-4 space-y-2">
@@ -421,13 +485,14 @@ export default function Community() {
           </div>
         </DialogContent>
       </Dialog>
+
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>게시글 수정</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Textarea
               value={editText}
               onChange={handleEditChange}
@@ -440,14 +505,31 @@ export default function Community() {
               {editText.length}/100
             </p>
 
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-700">이미지 변경</p>
+              {editImagePreview && (
+                <div className="w-full h-48 bg-gray-100 overflow-hidden rounded-lg">
+                  <img
+                    src={editImagePreview}
+                    alt="수정 이미지 미리보기"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleEditImageChange}
+              />
+              <p className="text-xs text-gray-500">
+                새 이미지를 선택하면 저장 시 기존 이미지가 교체됩니다.
+              </p>
+            </div>
+
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
-                onClick={() => {
-                  setShowEditDialog(false);
-                  setEditingPostId(null);
-                  setEditText('');
-                }}
+                onClick={resetEditDialog}
               >
                 취소
               </Button>

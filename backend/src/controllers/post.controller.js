@@ -10,7 +10,7 @@ const createPost = async (req, res) => {
   const post = await postService.createPost({
     userId: req.user.id,
     content: req.body.content,
-    imageUrl: req.file ? req.file.path : null
+    imageUrl: req.file ? req.file.path : null,
   });
 
   res.status(201).json({
@@ -19,18 +19,15 @@ const createPost = async (req, res) => {
   });
 };
 
-
 const updatePost = async (req, res) => {
-  const post = await postService.updatePost({
+  const result = await postService.updatePost({
     postId: Number(req.params.postId),
     userId: req.user.id,
     content: req.body.content,
+    imageUrl: req.file ? req.file.path : null,
   });
 
-  res.json({
-    message: '게시글이 수정되었습니다.',
-    post,
-  });
+  res.json(result);
 };
 
 const deletePost = async (req, res) => {
@@ -64,6 +61,15 @@ const createComment = async (req, res) => {
   });
 };
 
+const deleteComment = async (req, res) => {
+  const result = await postService.deleteComment({
+    commentId: Number(req.params.commentId),
+    userId: req.user.id,
+  });
+
+  res.json(result);
+};
+
 module.exports = {
   getPosts,
   createPost,
@@ -71,4 +77,5 @@ module.exports = {
   deletePost,
   toggleLike,
   createComment,
+  deleteComment,
 };

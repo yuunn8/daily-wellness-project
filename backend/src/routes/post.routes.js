@@ -21,10 +21,10 @@ router.post(
   asyncHandler(postController.createPost)
 );
 
-
 router.patch(
   '/:postId',
   authMiddleware,
+  upload.single('image'),
   validateUpdatePost,
   asyncHandler(postController.updatePost)
 );
@@ -38,6 +38,12 @@ router.post(
   authMiddleware,
   validateCreateComment,
   asyncHandler(postController.createComment)
+);
+
+router.delete(
+  '/:postId/comments/:commentId',
+  authMiddleware,
+  asyncHandler(postController.deleteComment)
 );
 
 module.exports = router;

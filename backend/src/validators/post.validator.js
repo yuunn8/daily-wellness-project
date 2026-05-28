@@ -12,12 +12,11 @@ const validateCreatePost = (req, res, next) => {
   next();
 };
 
-
 const validateUpdatePost = (req, res, next) => {
   const { content } = req.body;
 
   if (!content || !content.trim()) {
-    return res.status(400).json({ message: '수정할 내용을 입력해주세요.' });
+    return res.status(400).json({ message: '수정할 게시글 내용을 입력해주세요.' });
   }
 
   if (content.length > 100) {
