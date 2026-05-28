@@ -5,6 +5,7 @@ const authMiddleware = require('../middleware/auth.middleware');
 const upload = require('../middleware/upload.middleware');
 const {
   validateCreatePost,
+  validateUpdatePost,
   validateCreateComment,
 } = require('../validators/post.validator');
 
@@ -18,6 +19,14 @@ router.post(
   upload.single('image'),
   validateCreatePost,
   asyncHandler(postController.createPost)
+);
+
+
+router.patch(
+  '/:postId',
+  authMiddleware,
+  validateUpdatePost,
+  asyncHandler(postController.updatePost)
 );
 
 router.delete('/:postId', authMiddleware, asyncHandler(postController.deletePost));

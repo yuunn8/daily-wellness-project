@@ -12,6 +12,21 @@ const validateCreatePost = (req, res, next) => {
   next();
 };
 
+
+const validateUpdatePost = (req, res, next) => {
+  const { content } = req.body;
+
+  if (!content || !content.trim()) {
+    return res.status(400).json({ message: '수정할 내용을 입력해주세요.' });
+  }
+
+  if (content.length > 100) {
+    return res.status(400).json({ message: '게시글은 100자 이하여야 합니다.' });
+  }
+
+  next();
+};
+
 const validateCreateComment = (req, res, next) => {
   const { content } = req.body;
 
@@ -28,5 +43,6 @@ const validateCreateComment = (req, res, next) => {
 
 module.exports = {
   validateCreatePost,
+  validateUpdatePost,
   validateCreateComment,
 };

@@ -4,21 +4,31 @@ import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useApp } from '@/contexts/AppContext';
-import { Heart, MessageCircle, Send, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, MoreHorizontal, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const API_BASE_URL = 'https://daily-wellness.onrender.com/api';
-const SERVER_URL = 'https://daily-wellness.onrender.com';
+const SERVER_URL = 'https://daily-wellness.onrender.com/api';
 
 export default function Community() {
   const [, setLocation] = useLocation();
-  const { isLoggedIn, communityPosts, setCommunityPosts, addComment, user, setUser } = useApp();
+  const { isLoggedIn, communityPosts, setCommunityPosts, addComment, user } = useApp();
 
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [searchText, setSearchText] = useState('');
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
 
   useEffect(() => {
     if (!isLoggedIn && !localStorage.getItem('token')) {
@@ -96,51 +106,6 @@ export default function Community() {
     }
   };
 
-
-  const handleDeletePost = async (postId: string) => {
-    if (!window.confirm('인증글을 삭제하시겠습니까? 삭제 시 코인과 미션 완료 기록도 함께 취소됩니다.')) {
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('token');
-
-      const res = await fetch(`${API_BASE_URL}/posts/${postId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || '게시글 삭제 실패');
-      }
-
-      setCommunityPosts((prev) => prev.filter((post) => post.id !== postId));
-
-      const userRes = await fetch(`${API_BASE_URL}/user/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (userRes.ok) {
-        const userData = await userRes.json();
-        if (userData.user) {
-          // 삭제로 인해 변경된 코인과 연속 인증일을 화면에 반영한다.
-          setUser(userData.user);
-        }
-      }
-
-      alert(data.message || '인증글이 삭제되었습니다.');
-      await fetchPosts();
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
-
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value.length <= 50) {
       setCommentText(e.target.value);
@@ -183,6 +148,86 @@ export default function Community() {
       await fetchPosts();
     }
   };
+
+  const openEditDialog = (postId: string, caption: string) => {
+    setEditingPostId(postId);
+    setEditText(caption || '');
+    setShowEditDialog(true);
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (e.target.value.length <= 100) {
+      setEditText(e.target.value);
+    }
+  };
+
+  const handleUpdatePost = async () => {
+    if (!editingPostId || !editText.trim()) return;
+
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(`${API_BASE_URL}/posts/${editingPostId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: editText.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || '게시글 수정 실패');
+      }
+
+      setCommunityPosts((prev) =>
+        prev.map((post) =>
+          post.id === editingPostId
+            ? { ...post, caption: data.post?.caption ?? editText.trim() }
+            : post
+        )
+      );
+
+      setShowEditDialog(false);
+      setEditingPostId(null);
+      setEditText('');
+
+      await fetchPosts();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    const confirmed = window.confirm('게시글을 삭제하시겠습니까? 인증글이라면 관련 코인과 미션 완료 기록도 취소됩니다.');
+
+    if (!confirmed) return;
+
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || '게시글 삭제 실패');
+      }
+
+      setCommunityPosts((prev) => prev.filter((post) => post.id !== postId));
+      await fetchPosts();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
 
   if (!isLoggedIn && !localStorage.getItem('token')) {
     return null;
@@ -236,18 +281,34 @@ export default function Community() {
                       <p className="font-semibold text-gray-900">{post.userName}</p>
                       <p className="text-sm text-gray-600">{post.missionTitle}</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <p className="text-xs text-gray-500">
                         {new Date(post.createdAt).toLocaleString('ko-KR')}
                       </p>
-                      {String(post.userId) === String(user?.id) && (
-                        <button
-                          onClick={() => handleDeletePost(post.id)}
-                          className="text-gray-400 hover:text-red-500 transition-colors"
-                          aria-label="인증글 삭제"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+
+                      {user && String(post.userId) === String(user.id) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="p-1 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                              aria-label="게시글 메뉴"
+                            >
+                              <MoreHorizontal className="w-5 h-5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditDialog(post.id, post.caption)}>
+                              수정하기
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDeletePost(post.id)}
+                              className="text-red-600 focus:text-red-600"
+                            >
+                              삭제하기
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       )}
                     </div>
                   </div>

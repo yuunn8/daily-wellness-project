@@ -11,6 +11,20 @@ export const createPost = async (payload: { content: string }) => {
   });
 };
 
+
+export const updatePost = async (postId: number, content: string) => {
+  return apiFetch(`/posts/${postId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ content }),
+  });
+};
+
+export const deletePost = async (postId: number) => {
+  return apiFetch(`/posts/${postId}`, {
+    method: 'DELETE',
+  });
+};
+
 export const toggleLike = async (postId: number) => {
   return apiFetch(`/posts/${postId}/like`, {
     method: 'POST',

@@ -19,8 +19,22 @@ const createPost = async (req, res) => {
   });
 };
 
-const toggleLike = async (req, res) => {
-  const result = await postService.toggleLike({
+
+const updatePost = async (req, res) => {
+  const post = await postService.updatePost({
+    postId: Number(req.params.postId),
+    userId: req.user.id,
+    content: req.body.content,
+  });
+
+  res.json({
+    message: '게시글이 수정되었습니다.',
+    post,
+  });
+};
+
+const deletePost = async (req, res) => {
+  const result = await postService.deletePost({
     postId: Number(req.params.postId),
     userId: req.user.id,
   });
@@ -28,9 +42,8 @@ const toggleLike = async (req, res) => {
   res.json(result);
 };
 
-
-const deletePost = async (req, res) => {
-  const result = await postService.deletePost({
+const toggleLike = async (req, res) => {
+  const result = await postService.toggleLike({
     postId: Number(req.params.postId),
     userId: req.user.id,
   });
@@ -54,7 +67,8 @@ const createComment = async (req, res) => {
 module.exports = {
   getPosts,
   createPost,
+  updatePost,
+  deletePost,
   toggleLike,
   createComment,
-  deletePost,
 };

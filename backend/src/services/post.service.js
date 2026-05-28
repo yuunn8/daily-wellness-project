@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 
+
 const toYMD = (value) => {
   if (!value) return null;
 
@@ -37,7 +38,7 @@ const calculateStreakFromDates = (dates) => {
   let streak = 1;
   let previousDate = sortedDates[0];
 
-  for (let i = 1; i < sortedDates.length; i++) {
+  for (let i = 1; i < sortedDates.length; i += 1) {
     const currentDate = sortedDates[i];
 
     if (diffDays(currentDate, previousDate) === 1) {
@@ -80,7 +81,6 @@ const recalculateUserStreak = async (connection, userId) => {
 
   return { streakDays, lastCompletedDate };
 };
-
 
 const getPosts = async (userId) => {
   const [posts] = await pool.query(
@@ -269,6 +269,96 @@ const createComment = async ({ postId, userId, content }) => {
 };
 
 
+const updatePost = async ({ postId, userId, content }) => {
+  const trimmedContent = content?.trim();
+
+  if (!trimmedContent) {
+    const error = new Error('수정할 내용을 입력해주세요.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const [posts] = await pool.query(
+    `
+    SELECT id, user_id
+    FROM posts
+    WHERE id = ?
+      AND deleted_at IS NULL
+    LIMIT 1
+    `,
+    [postId]
+  );
+
+  if (!posts.length) {
+    const error = new Error('게시글을 찾을 수 없습니다.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (Number(posts[0].user_id) !== Number(userId)) {
+    const error = new Error('본인 글만 수정할 수 있습니다.');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  await pool.query(
+    `
+    UPDATE posts
+    SET content = ?,
+        updated_at = NOW()
+    WHERE id = ?
+    `,
+    [trimmedContent, postId]
+  );
+
+  const [rows] = await pool.query(
+    `
+    SELECT
+      p.id,
+      p.user_id,
+      p.mission_log_id,
+      p.content,
+      p.image_url,
+      p.created_at,
+      u.nickname,
+      m.title AS mission_title,
+      (
+        SELECT COUNT(*)
+        FROM likes l
+        WHERE l.post_id = p.id
+      ) AS like_count,
+      EXISTS (
+        SELECT 1
+        FROM likes l2
+        WHERE l2.post_id = p.id
+          AND l2.user_id = ?
+      ) AS is_liked
+    FROM posts p
+    JOIN users u ON p.user_id = u.id
+    LEFT JOIN mission_logs ml ON p.mission_log_id = ml.id
+    LEFT JOIN missions m ON ml.mission_id = m.id
+    WHERE p.id = ?
+    LIMIT 1
+    `,
+    [userId, postId]
+  );
+
+  const post = rows[0];
+
+  return {
+    id: String(post.id),
+    userId: String(post.user_id),
+    userName: post.nickname,
+    missionTitle: post.mission_title || '미션 인증',
+    imageUrl: post.image_url,
+    caption: post.content,
+    likes: Number(post.like_count),
+    liked: Boolean(post.is_liked),
+    createdAt: post.created_at,
+    comments: [],
+  };
+};
+
 const deletePost = async ({ postId, userId }) => {
   const connection = await pool.getConnection();
 
@@ -303,7 +393,7 @@ const deletePost = async ({ postId, userId }) => {
     const post = postRows[0];
 
     if (Number(post.user_id) !== Number(userId)) {
-      const error = new Error('본인 인증글만 삭제할 수 있습니다.');
+      const error = new Error('본인 글만 삭제할 수 있습니다.');
       error.statusCode = 403;
       throw error;
     }
@@ -311,9 +401,26 @@ const deletePost = async ({ postId, userId }) => {
     const missionLogId = post.mission_log_id;
     const rewardCoins = Number(post.reward_coins || 0);
 
-    await connection.query('DELETE FROM comments WHERE post_id = ?', [postId]);
+    await connection.query(
+      `
+      UPDATE comments
+      SET deleted_at = NOW()
+      WHERE post_id = ?
+      `,
+      [postId]
+    );
+
     await connection.query('DELETE FROM likes WHERE post_id = ?', [postId]);
-    await connection.query('DELETE FROM posts WHERE id = ?', [postId]);
+
+    await connection.query(
+      `
+      UPDATE posts
+      SET deleted_at = NOW(),
+          updated_at = NOW()
+      WHERE id = ?
+      `,
+      [postId]
+    );
 
     if (missionLogId) {
       await connection.query(
@@ -346,7 +453,7 @@ const deletePost = async ({ postId, userId }) => {
     await connection.commit();
 
     return {
-      message: '인증글이 삭제되었습니다.',
+      message: '게시글이 삭제되었습니다.',
       deductedCoins: missionLogId ? rewardCoins : 0,
     };
   } catch (error) {
@@ -360,7 +467,8 @@ const deletePost = async ({ postId, userId }) => {
 module.exports = {
   getPosts,
   createPost,
+  updatePost,
+  deletePost,
   toggleLike,
   createComment,
-  deletePost,
 };
