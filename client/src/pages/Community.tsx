@@ -571,7 +571,7 @@ export default function Community() {
               <Button
                 variant="outline"
                 onClick={resetEditDialog}
-                className="flex-1 rounded-xl"
+                className="flex-1 rounded-xl border-gray-200 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0"
               >
                 취소
               </Button>
