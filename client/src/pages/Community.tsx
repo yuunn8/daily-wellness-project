@@ -514,6 +514,23 @@ export default function Community() {
                 className="hidden"
               />
 
+              <p className="text-xs text-gray-500">
+                {editImageName || '새 이미지를 선택하지 않았습니다.'}
+              </p>
+
+              {editImageFile && editImagePreview && (
+                <div className="w-full h-44 overflow-hidden rounded-lg bg-gray-100 border border-gray-100">
+                  <img
+                    src={editImagePreview}
+                    alt="선택한 이미지 미리보기"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+
+              <p className="text-xs text-gray-500">
+                새 이미지를 선택하면 기존 이미지가 교체됩니다.
+              </p>
             </div>
 
             <div className="space-y-2">
