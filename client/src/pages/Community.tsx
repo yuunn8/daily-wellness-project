@@ -421,6 +421,48 @@ export default function Community() {
           </div>
         </DialogContent>
       </Dialog>
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>게시글 수정</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <Textarea
+              value={editText}
+              onChange={handleEditChange}
+              placeholder="수정할 내용을 입력하세요"
+              maxLength={100}
+              className="min-h-28"
+            />
+
+            <p className="text-xs text-gray-500 text-right">
+              {editText.length}/100
+            </p>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditDialog(false);
+                  setEditingPostId(null);
+                  setEditText('');
+                }}
+              >
+                취소
+              </Button>
+
+              <Button
+                onClick={handleUpdatePost}
+                disabled={!editText.trim()}
+                className="bg-primary hover:bg-primary/90 text-white"
+              >
+                저장
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
