@@ -514,13 +514,6 @@ export default function Community() {
                 className="hidden"
               />
 
-              <p className="text-xs text-gray-500">
-                {editImageName || '새 이미지를 선택하지 않았습니다.'}
-              </p>
-
-              <p className="text-xs text-gray-500">
-                새 이미지를 선택하면 기존 이미지가 교체됩니다.
-              </p>
             </div>
 
             <div className="space-y-2">
