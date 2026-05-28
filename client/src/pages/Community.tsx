@@ -490,20 +490,52 @@ export default function Community() {
       </Dialog>
 
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>게시글 수정</DialogTitle>
+        <DialogContent className="max-w-md rounded-2xl border-0 p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="text-lg font-semibold text-gray-900">
+              게시글 수정
+            </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-5">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700">이미지 수정</p>
+          <div className="px-6 pb-6 space-y-6">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-900">
+                  이미지 수정
+                </p>
+
+                {editImageName && (
+                  <span className="text-xs text-gray-400 truncate max-w-[180px]">
+                    {editImageName}
+                  </span>
+                )}
+              </div>
 
               <label
                 htmlFor="edit-image-upload"
-                className="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                className="group flex h-52 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 transition-all hover:border-gray-300 hover:bg-gray-100"
               >
-                이미지 선택하기
+                {editImageFile && editImagePreview ? (
+                  <img
+                    src={editImagePreview}
+                    alt="선택 이미지 미리보기"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-gray-500">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm border border-gray-100">
+                      +
+                    </div>
+
+                    <div className="text-sm font-medium">
+                      이미지 선택
+                    </div>
+
+                    <div className="text-xs text-gray-400">
+                      JPG, PNG 업로드 가능
+                    </div>
+                  </div>
+                )}
               </label>
 
               <Input
@@ -513,46 +545,33 @@ export default function Community() {
                 onChange={handleEditImageChange}
                 className="hidden"
               />
-
-              <p className="text-xs text-gray-500">
-                {editImageName || '새 이미지를 선택하지 않았습니다.'}
-              </p>
-
-              {editImageFile && editImagePreview && (
-                <div className="w-full h-44 overflow-hidden rounded-lg bg-gray-100 border border-gray-100">
-                  <img
-                    src={editImagePreview}
-                    alt="선택한 이미지 미리보기"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-
-              <p className="text-xs text-gray-500">
-                새 이미지를 선택하면 기존 이미지가 교체됩니다.
-              </p>
             </div>
 
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700">글 수정</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-900">
+                  글 수정
+                </p>
+
+                <span className="text-xs text-gray-400">
+                  {editText.length}/100
+                </span>
+              </div>
 
               <Textarea
                 value={editText}
                 onChange={handleEditChange}
                 placeholder="수정할 내용을 입력하세요"
                 maxLength={100}
-                className="min-h-28"
+                className="min-h-32 resize-none rounded-2xl border-gray-200 bg-gray-50 px-4 py-3 focus-visible:ring-1 focus-visible:ring-gray-300"
               />
-
-              <p className="text-xs text-gray-500 text-right">
-                {editText.length}/100
-              </p>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex gap-2 pt-2">
               <Button
                 variant="outline"
                 onClick={resetEditDialog}
+                className="flex-1 rounded-xl"
               >
                 취소
               </Button>
@@ -560,7 +579,7 @@ export default function Community() {
               <Button
                 onClick={handleUpdatePost}
                 disabled={!editText.trim()}
-                className="bg-primary hover:bg-primary/90 text-white"
+                className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-white"
               >
                 저장
               </Button>
