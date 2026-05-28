@@ -4,7 +4,7 @@ import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useApp } from '@/contexts/AppContext';
-import { Heart, MessageCircle, MoreHorizontal, Send, Trash2 } from 'lucide-react';
+import { Heart, ImagePlus, MessageCircle, MoreHorizontal, Send, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -487,60 +487,93 @@ export default function Community() {
       </Dialog>
 
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100">
             <DialogTitle>게시글 수정</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <Textarea
-              value={editText}
-              onChange={handleEditChange}
-              placeholder="수정할 내용을 입력하세요"
-              maxLength={100}
-              className="min-h-28"
-            />
-
-            <p className="text-xs text-gray-500 text-right">
-              {editText.length}/100
-            </p>
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700">이미지 변경</p>
-              {editImagePreview && (
-                <div className="w-full h-48 bg-gray-100 overflow-hidden rounded-lg">
-                  <img
-                    src={editImagePreview}
-                    alt="수정 이미지 미리보기"
-                    className="w-full h-full object-cover"
-                  />
+          <div className="grid gap-0 md:grid-cols-[240px_1fr]">
+            <div className="bg-gray-50 p-6 border-b md:border-b-0 md:border-r border-gray-100">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">이미지</p>
+                  <p className="text-xs text-gray-500 mt-1">현재 이미지를 보면서 바로 교체할 수 있습니다.</p>
                 </div>
-              )}
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handleEditImageChange}
-              />
-              <p className="text-xs text-gray-500">
-                새 이미지를 선택하면 저장 시 기존 이미지가 교체됩니다.
-              </p>
+
+                <div className="w-full aspect-square bg-white overflow-hidden rounded-xl border border-gray-200 flex items-center justify-center">
+                  {editImagePreview ? (
+                    <img
+                      src={editImagePreview}
+                      alt="수정 이미지 미리보기"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-center text-gray-400 px-4">
+                      <ImagePlus className="w-8 h-8 mx-auto mb-2" />
+                      <p className="text-xs">등록된 이미지가 없습니다.</p>
+                    </div>
+                  )}
+                </div>
+
+                <Input
+                  id="edit-image-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleEditImageChange}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => document.getElementById('edit-image-input')?.click()}
+                >
+                  이미지 선택
+                </Button>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  새 이미지를 선택하면 저장 시 기존 이미지가 교체됩니다.
+                </p>
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={resetEditDialog}
-              >
-                취소
-              </Button>
+            <div className="p-6 space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-gray-900">내용</p>
+                  <p className="text-xs text-gray-500">{editText.length}/100</p>
+                </div>
+                <Textarea
+                  value={editText}
+                  onChange={handleEditChange}
+                  placeholder="수정할 내용을 입력하세요"
+                  maxLength={100}
+                  className="min-h-40 resize-none"
+                />
+              </div>
 
-              <Button
-                onClick={handleUpdatePost}
-                disabled={!editText.trim()}
-                className="bg-primary hover:bg-primary/90 text-white"
-              >
-                저장
-              </Button>
+              <div className="rounded-lg bg-gray-50 border border-gray-100 p-3">
+                <p className="text-xs font-medium text-gray-700 mb-1">수정 전 확인</p>
+                <p className="text-sm text-gray-700 break-words whitespace-pre-wrap">
+                  {editText.trim() || '입력한 내용이 여기에 미리 표시됩니다.'}
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={resetEditDialog}
+                >
+                  취소
+                </Button>
+
+                <Button
+                  onClick={handleUpdatePost}
+                  disabled={!editText.trim()}
+                  className="bg-primary hover:bg-primary/90 text-white"
+                >
+                  저장
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
