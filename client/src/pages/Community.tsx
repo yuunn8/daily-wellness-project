@@ -492,41 +492,38 @@ export default function Community() {
             <DialogTitle>게시글 수정</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <Textarea
-              value={editText}
-              onChange={handleEditChange}
-              placeholder="수정할 내용을 입력하세요"
-              maxLength={100}
-              className="min-h-28"
-            />
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-700">글 수정</p>
 
-            <p className="text-xs text-gray-500 text-right">
-              {editText.length}/100
-            </p>
+              <Textarea
+                value={editText}
+                onChange={handleEditChange}
+                placeholder="수정할 내용을 입력하세요"
+                maxLength={100}
+                className="min-h-28"
+              />
+
+              <p className="text-xs text-gray-500 text-right">
+                {editText.length}/100
+              </p>
+            </div>
 
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700">이미지 변경</p>
-              {editImagePreview && (
-                <div className="w-full h-48 bg-gray-100 overflow-hidden rounded-lg">
-                  <img
-                    src={editImagePreview}
-                    alt="수정 이미지 미리보기"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
+              <p className="text-sm font-medium text-gray-700">이미지 수정</p>
+
               <Input
                 type="file"
                 accept="image/*"
                 onChange={handleEditImageChange}
               />
+
               <p className="text-xs text-gray-500">
-                새 이미지를 선택하면 저장 시 기존 이미지가 교체됩니다.
+                새 이미지를 선택하면 기존 이미지가 교체됩니다.
               </p>
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-2">
               <Button
                 variant="outline"
                 onClick={resetEditDialog}
@@ -544,7 +541,6 @@ export default function Community() {
             </div>
           </div>
         </DialogContent>
-      </Dialog>
-    </div>
+      </Dialog></div>
   );
 }
