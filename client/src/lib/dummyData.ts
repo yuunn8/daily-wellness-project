@@ -4,7 +4,7 @@ export const dummyUser: User = {
   id: '1',
   email: 'user@example.com',
   name: '김웨비망',
-  coins: 0,
+  coins: 5000,
   streakDays: 0,
   createdAt: '2024-01-15',
 };
